@@ -1,0 +1,28 @@
+// Create the user
+aws iam create-user --user-name Billy
+
+//Create a password for the user
+aws iam create-login-profile --generate-cli-skeleton > create-login-profile.json
+
+// The below code is the password for the user in JSON file create-login-profile.json
+{
+    "UserName": "Bob",
+    "Password": "&illyW@!ts101",
+    "PasswordResetRequired": true
+}
+
+// Now assign the create-login-profile to the user
+aws iam create-login-profile --cli-input-json file://create-login-profile.json
+
+// Create an access key for the IAM user to make programmatic actions 
+// to the CLI (make sure to store the access key and secret access key)
+aws iam create-access-key --user-name Billy
+
+// Create group name Admins
+aws iam create-group --group-name Admins
+
+// Add the user to an IAM group
+aws iam add-user-to-group --user-name Billy --group-name Admins
+
+// And finally, attach an Admin policy to the IAM user
+aws iam attach-user-policy --policy-arn arn:aws:iam:ACCOUNT-ID:aws:policy/AdministratorAccess --user-name Billy

@@ -1,0 +1,462 @@
+###################### Parameter Section #####################
+Parameters:
+  # Region location
+  Region: 
+    Type: String
+    Default: us-east-1
+    AllowedValues: 
+      - us-east-1
+      - us-east-2  
+      - us-west-1
+      - us-west-2    
+      - eu-west-1
+      - eu-west-2
+      - eu-west-3
+      - eu-central-1
+      - ap-south-1
+      - ap-northeast-1
+      - ap-northeast-2
+      - ap-southeast-1
+      - ap-southeast-2
+      - ca-central-1
+      - sa-east-1
+    Description: Enter the AWS region to deploy stack. Default is eu-west-1
+  # VPC Cidr Block
+  VPCCidr:
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
+    Type: String
+    Default: 10.0.0.0/16
+    Description: Enter the CIDR for your VPC
+  # Public Subnets
+  PublicSubnet1Cidr:
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Enter the CIDR for your Public Subnet 1
+  PublicSubnet2Cidr:
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
+    Type: String
+    Default: 10.0.2.0/24
+    Description: Enter the CIDR for your Public Subnet 2
+  # Private Subnets
+  PrivateSubnet1Cidr:
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
+    Type: String
+    Default: 10.0.3.0/24
+    Description: Enter the CIDR for your Private Subnet 1
+  PrivateSubnet2Cidr:
+    AllowedPattern: '((\d{1,3})\.){3}\d{1,3}/\d{1,2}'
+    Type: String
+    Default: 10.0.4.0/24
+    Description: Enter the CIDR for your Private Subnet 2
+  # Key Pair to attach to 
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  # Database Parameters
+  DBName:
+    Default: MyDatabase
+    Description: App Database
+    Type: String
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+  DBUser:
+    NoEcho: true
+    Description: 'Timmy'
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: User name must begin with a letter and contain only alphanumeric characters
+  DBPassword:
+    NoEcho: true
+    Description: Database admin account password
+    Type: String
+    MinLength: '1'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]+'
+    ConstraintDescription: Must contain only alphanumeric characters
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (GB)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: Must be between 5 and 1024 GB
+  DBInstanceClass:
+    Description: The database instance type
+    Type: String
+    Default: db.t2.small
+    AllowedValues: [ db.t1.micro, db.m1.small, db.m1.medium, db.m1.large, db.m1.xlarge,
+      db.m2.xlarge, db.m2.2xlarge, db.m2.4xlarge, db.m3.medium, db.m3.large, db.m3.xlarge,
+      db.m3.2xlarge, db.m4.large, db.m4.xlarge, db.m4.2xlarge, db.m4.4xlarge, db.m4.10xlarge,
+      db.r3.large, db.r3.xlarge, db.r3.2xlarge, db.r3.4xlarge, db.r3.8xlarge, db.m2.xlarge,
+      db.m2.2xlarge, db.m2.4xlarge, db.cr1.8xlarge, db.t2.micro, db.t2.small, db.t2.medium,
+      db.t2.large ]
+    ConstraintDescription: Must select a valid database instance type
+#  EC2SecurityGroup:
+#    Description: The EC2 security group that contains instances that need access to the database
+#    Default: default
+#    Type: String
+#    AllowedPattern: '[a-zA-Z0-9\-]+'
+#    ConstraintDescription: Must be a valid security group name
+  MultiAZ:
+    Description: Multi-AZ master database
+    Type: String
+    Default: false
+    AllowedValues: [ true, false]
+    ConstraintDescription: Must be a true or false
+
+##################### Mappings Section ############################
+Mappings: 
+  RegionMap: 
+    eu-west-1: 
+      HVM64: ami-047bb4163c506cd98
+    eu-west-2: 
+      HVM64: ami-f976839e
+    eu-west-3:
+      HVM64: ami-0ebc281c20e89ba4b
+    eu-central-1: 
+      HVM64: ami-0233214e13e500f77
+    us-west-2:
+      HVM64: ami-0b59bfac6be064b78
+    us-west-1:
+      HVM64: ami-0bdb828fd58c52235
+    us-east-2:
+      HVM64: ami-a0cfeed8
+    us-east-1:
+      HVM64: ami-0ff8a91507f77f867
+    ap-south-1:
+      HVM64: ami-0912f71e06545ad88
+    ap-northeast-2:
+      HVM64: ami-0a10b2721688ce9d2
+    ap-northeast-1:
+      HVM64: ami-06cd52961ce9f0d85
+    ap-southeast-2:
+      HVM64: ami-09b42976632b27e9b
+    ap-southeast-1:
+      HVM64: ami-08569b978cc4dfa10
+    ca-central-1:
+      HVM64: ami-0b18956f
+    sa-east-1:
+      HVM64: ami-07b14488da8ea02a0
+
+##################### Resources Section #########################
+Resources:
+  # VPC Cidr block
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: Main CIDR block
+  # Public subnet (1)
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${Region}a
+      CidrBlock: !Ref PublicSubnet1Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name 
+          Value: PublicSubnet-1
+  # Public subnet (2)
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${Region}b
+      CidrBlock: !Ref PublicSubnet2Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name 
+          Value: PublicSubnet-2
+  # Private Subnets (1)
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${Region}a
+      CidrBlock: !Ref PrivateSubnet1Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name 
+          Value: PrivateSubnet-1
+  # Private Subnet (2)
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Sub ${Region}b
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name 
+          Value: PrivateSubnet-2
+  # Internet Gateway
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Main IGW
+  AttachIGWToGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref IGW
+  # Public and Private route tables
+  PublicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Public-Route
+  PrivateRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Private-RT
+  # Associate public and private route tables
+  AssociatePublicSubnet1ToPublicRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref PublicSubnet1
+  AssociatePublicSubnet2ToPublicRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PublicRT
+      SubnetId: !Ref PublicSubnet2
+  AssociatePrivateSubnet1ToPrivateRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivateRT
+      SubnetId: !Ref PrivateSubnet1
+  AssociatePrivateSubnet2ToPrivateRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: 
+      RouteTableId: !Ref PrivateRT
+      SubnetId: !Ref PrivateSubnet2
+  # Public route to internet
+  PublicRouteToInternet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRT
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+  PrivateRouteToInternet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRT
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGW
+  # Create an EIP which will be used by the NAT Gateway
+  NATEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: !Ref VPC
+  NATGW:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATEIP.AllocationId
+      SubnetId: !Ref PublicSubnet2
+      Tags:
+        - Key : Name
+          Value: NAT-GW
+  # Bastion Security Group
+  BastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Security Group for Bastion Host to allow SSH
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name 
+          Value: Bastion-SG
+      VpcId: !Ref VPC
+  # ALB Security Group
+  ALBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Security Group for Application Load Balancer to expose HTTP 80
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name 
+          Value: ALB-SG
+      VpcId: !Ref VPC
+  # EC2 Security Group
+  EC2SG:
+    Type: AWS::EC2::SecurityGroup
+    Properties: 
+      GroupDescription: Security Group for EC2 to allow SSH from Bastion and expose HTTP 80
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref BastionSG
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSG
+      Tags:
+        - Key: Name 
+          Value: EC2-SG
+      VpcId: !Ref VPC
+  # Bastion Auto Scaling Group launch configuration
+  BastionLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      LaunchConfigurationName: BastionLaunchConfig
+      AssociatePublicIpAddress: true
+      ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", HVM64 ]
+      InstanceMonitoring: true
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      SecurityGroups: 
+        - !Ref BastionSG
+  # Bastion Auto Scaling Group 
+  BastionASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: Bastion ASG
+      VPCZoneIdentifier:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      LaunchConfigurationName: BastionLaunchConfig
+      DesiredCapacity: 0
+      MaxSize: 1
+      MinSize: 0
+      Tags:
+        - Key: Name
+          Value: Bastion ASG
+          PropagateAtLaunch: true
+  # Application Load Balancer
+  ALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: ALB
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref ALBSG
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      Type: application
+  # Application Load Balancer listner
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTG
+      LoadBalancerArn: !Ref ALB
+      Port: 80
+      Protocol: HTTP
+  # Application Load Balancer target group
+  ALBTG:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: '200'
+      Name: AppTargets
+      Port: 80
+      Protocol: HTTP
+      Targets:
+      - Id: !Ref App1
+        Port: 80
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name 
+          Value: ALB-TG
+  # Apache EC2 instance
+  App1:
+    Type: AWS::EC2::Instance
+    Properties: 
+      AvailabilityZone: !Sub ${Region}a
+      BlockDeviceMappings: 
+        - DeviceName: "/dev/xvda"
+          Ebs: 
+            VolumeType: "gp2"
+            DeleteOnTermination: "true"
+            VolumeSize: "8"
+      ImageId: !FindInMap
+        - RegionMap
+        - !Ref 'AWS::Region'
+        - HVM64
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash
+              aws ec2 wait nat-gateway-available --nat-gateway-ids {gateway}
+              sudo yum update -y
+              sudo yum install -y httpd
+              sudo service httpd start
+              sudo chkconfig httpd on
+            - {
+              gateway: !Ref NATGW
+              }
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "false"
+          DeviceIndex: "0"
+          SubnetId: !Ref PrivateSubnet1
+          GroupSet: 
+            - !Ref EC2SG
+      Tags: 
+        - Key: Name 
+          Value: Apache Server
+  # Database being RDS
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '3306'
+        ToPort: '3306'
+        SourceSecurityGroupName: !Ref EC2SG
+  # DB Master 
+  MasterDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DBName
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: MySQL
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      MultiAZ: !Ref MultiAZ
+      Tags:
+      - Key: Name
+        Value: Master Database
+      DBSecurityGroup: !Ref DBSecurityGroup
+      VPCSecurityGroups: !GetAtt DBSecurityGroup.GroupId
+    DeletionPolicy: Snapshot
+  # DB Replica
+  ReplicaDB:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        SourceDBInstanceIdentifier: !Ref MasterDB
+        DBInstnaceClass: !Ref DBInstanceClass
+        Tags:
+        - Key: Name
+          Value: Read Replica Database

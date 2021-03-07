@@ -1,0 +1,66 @@
+# EC2 instance in us-east-1
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-00068cd7555f543d5
+      InstanceType: t2.micro
+
+# EC2 security group
+SSHSecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: Enable SSH access via port 22
+    SecurityGroupIngress:
+    - CidrIP: 0.0.0.0/0 # For extra protection, connect to your IP address
+      FromPort: 22
+      IpProtocol: tcp
+      ToPort: 22
+
+# Elastic Load Balancer
+MyLoadBalancer:
+  Type: AWS::ElasticLoadBalancing::LoadBalancer
+  Properties:
+    AvailabilityZones:
+    - "us-east-1a"
+    Instances:
+    - Ref: ami-00068cd7555f543d5
+    Listeners:
+    - LoadBalancerPort: '80'
+      InstancePort: '80'
+      Protocol: HTTP
+    HealthCheck:
+      Target: HTTP:80/
+      HealthyThreshold: '3'
+      UnhealthyThreshold: '5'
+      Interval: '30'
+      Timeout: '5'
+
+# Auto Scaling Launch Configuartion
+ASGLaunch:
+  Type: AWS::AutoScaling::LaunchConfiguration
+  Properties:
+    ImageID: ami-00068cd7555f543d5
+    SecurityGroups:
+    - Ref: SSHSecurityGroup
+    InstanceType: t2.micro
+    BlockDeviceMappings:
+    - DeviceName: "/dev/sdk"
+      Ebs:
+        VolumeSize: '50'
+    - DeviceName: "/dev/sdc"
+      VirtualName: ephemeral0
+
+# Auto Scaling Group Resource
+ASGServerGroup:
+  Type: AWS::AutoScaling::AutoScalingGroup
+  Properties:
+    AvailabilityZones:
+      Fn::GetAZs: ''
+    LaunchConfigurationName:
+      Ref: SimpleConfig
+    MinSize: '1'
+    MaxSize: '3'
+    LoadBalancerNames:
+    - Ref: MyLoadBalancer
