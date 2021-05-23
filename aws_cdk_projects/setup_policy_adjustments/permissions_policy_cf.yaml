@@ -1,0 +1,204 @@
+Resources:
+  a4luserboundaryF1BA49BA:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:*
+              - cloudwatch:*
+              - ec2:*
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - iam:ListUsers
+              - iam:GetAccountPasswordPolicy
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - iam:*AccessKey*
+              - iam:ChangePassword
+              - iam:GetUser
+              - iam:*ServiceSpecificCredential*
+              - iam:*SigningCertificate*
+            Effect: Allow
+            Resource: arn:aws:iam::*:user/${aws:username}
+        Version: "2012-10-17"
+      Description: ""
+      ManagedPolicyName: a4luserboundary
+      Path: /
+    Metadata:
+      aws:cdk:path: SetupPolicyAdjustmentsStack/a4luserboundary/Resource
+  a4ladminboundaryB783E9D2:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - iam:CreateUser
+              - iam:DeleteUserPolicy
+              - iam:AttachUserPolicy
+              - iam:DetachUserPolicy
+              - iam:PutUserPermissionsBoundary
+              - iam:PutUserPolicy
+            Condition:
+              StringEquals:
+                iam:PermissionsBoundary: arn:aws:iam::647947540184:policy/a4luserboundary
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - cloudwatch:*
+              - iam:GetUser
+              - iam:ListUsers
+              - iam:DeleteUser
+              - iam:UpdateUser
+              - iam:CreateAccessKey
+              - iam:CreateLoginProfile
+              - iam:GetAccountPasswordPolicy
+              - iam:GetLoginProfile
+              - iam:ListGroups
+              - iam:ListGroupsForUser
+              - iam:CreateGroup
+              - iam:GetGroup
+              - iam:DeleteGroup
+              - iam:UpdateGroup
+              - iam:CreatePolicy
+              - iam:DeletePolicy
+              - iam:DeletePolicyVersion
+              - iam:GetPolicy
+              - iam:GetPolicyVersion
+              - iam:GetUserPolicy
+              - iam:GetRolePolicy
+              - iam:ListPolicies
+              - iam:ListPolicyVersions
+              - iam:ListEntitiesForPolicy
+              - iam:ListUserPolicies
+              - iam:ListAttachedUserPolicies
+              - iam:ListRolePolicies
+              - iam:ListAttachedRolePolicies
+              - iam:SetDefaultPolicyVersion
+              - iam:SimulatePrincipalPolicy
+              - iam:SimulateCustomPolicy
+            Effect: Allow
+            NotResource: arn:aws:iam::647947540184:user/bob
+          - Action:
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicy
+              - iam:DeletePolicyVersion
+              - iam:SetDefaultPolicyVersion
+            Effect: Deny
+            Resource:
+              - arn:aws:iam::647947540184:policy/a4luserboundary
+              - arn:aws:iam::647947540184:policy/a4ladminboundary
+          - Action: iam:DeleteUserPermissionsBoundary
+            Effect: Deny
+            Resource: "*"
+        Version: "2012-10-17"
+      Description: ""
+      ManagedPolicyName: a4ladminboundary
+      Path: /
+    Metadata:
+      aws:cdk:path: SetupPolicyAdjustmentsStack/a4ladminboundary/Resource
+  a4ladminpermissionspolicyEC90BF69:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: iam:*
+            Effect: Allow
+            Resource: "*"
+          - Action:
+              - cloudwatch:GetDashboard
+              - cloudwatch:GetMetricData
+              - cloudwatch:ListDashboards
+              - cloudwatch:GetMetricStatistics
+              - cloudwatch:ListMetrics
+            Effect: Allow
+            Resource: "*"
+        Version: "2012-10-17"
+      Description: ""
+      ManagedPolicyName: a4ladminpermissionspolicy
+      Path: /
+      Users:
+        - bob
+    Metadata:
+      aws:cdk:path: SetupPolicyAdjustmentsStack/a4ladminpermissionspolicy/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAAA1WMTQrCMBCFz+I+nTZgEXdC14LUE4RJlGntDCSpIiF3N1FQXL3H+/k0pH0PenMwj9CgnVsU7yCdo8FZDcIh+hWjGi48uiCrR1d9KSxFEs5Kdz10v3t6/7/bGpNZIB0Nm6uzJ7kRPiviL8g5KxbrYArtXW9B7wpzCkSNXznSUogffQGB1vs5rwAAAA==
+    Metadata:
+      aws:cdk:path: SetupPolicyAdjustmentsStack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-2
